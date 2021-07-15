@@ -7,5 +7,5 @@ import (
 
 func main() {
 	config.LoadConfig()
-	bot.GetFollowingStatuses()
+	bot.InitBot()
 }
