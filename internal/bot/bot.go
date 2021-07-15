@@ -1,43 +1,53 @@
 package bot
 
 import (
+	"encoding/gob"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 
-	"github.com/ibrokemypie/fedibooks-go/internal/db"
-	"github.com/ibrokemypie/fedibooks-go/internal/fedi"
+	"github.com/spf13/viper"
 )
 
 func InitBot() {
-	db, err := db.InitialiseDB()
+	instanceURL := viper.GetString("instance.instance_url")
+	accessToken := viper.GetString("instance.access_token")
+
+	historyFilePath := "./history.gob"
+
+	history := LoadFromGob(historyFilePath)
+
+	GetNewStatuses(&history, historyFilePath, instanceURL, accessToken)
+
+	fmt.Println("stored status count: " + strconv.Itoa(len(history.Statuses)))
+}
+
+func LoadFromGob(historyFilePath string) History {
+	historyFile, err := os.OpenFile(historyFilePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer historyFile.Close()
 
-	statuses := GetFollowingStatuses()
+	var history History
+	decoder := gob.NewDecoder(historyFile)
 
-	// Create a write transaction
-	txn := db.Txn(true)
-	for _, status := range statuses {
-		err = txn.Insert("status", status)
-		if err != nil {
-			log.Fatal(err)
-		}
+	err = decoder.Decode(&history)
+	if err != nil {
+		return History{LastStatus: make(map[string]string), Statuses: make(map[string]HistoryStatus)}
 	}
-	// Commit the transaction
-	txn.Commit()
 
-	// Create read-only transaction
-	txn = db.Txn(false)
-	defer txn.Abort()
-	it, err := txn.Get("status", "id")
+	return history
+}
+
+func SaveToGob(history *History, historyFilePath string) {
+	historyFile, err := os.OpenFile(historyFilePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer historyFile.Close()
 
-	for obj := it.Next(); obj != nil; obj = it.Next() {
-		status := obj.(fedi.Status)
-		fmt.Println("id: " + status.ID + ", author_id: " + status.Account.ID + ", text: " + status.Text)
-	}
-
+	encoder := gob.NewEncoder(historyFile)
+	encoder.Encode(history)
 }

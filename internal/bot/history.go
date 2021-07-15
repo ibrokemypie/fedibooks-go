@@ -1,57 +1,76 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ibrokemypie/fedibooks-go/internal/fedi"
-	"github.com/spf13/viper"
 )
 
-func GetFollowingStatuses() []fedi.Status {
-	instanceURL := viper.GetString("instance.instance_url")
-	accessToken := viper.GetString("instance.access_token")
+type History struct {
+	LastStatus map[string]string
+	Statuses   map[string]HistoryStatus
+}
 
+type HistoryStatus struct {
+	AuthorID string
+	Text     string
+}
+
+func GetNewStatuses(history *History, historyFilePath string, instanceURL, accessToken string) {
 	botUser, err := fedi.GetCurrentUser(instanceURL, accessToken)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	followedUsers, err := fedi.GetUserFollowing(botUser, instanceURL, accessToken)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var retrievedStatuses []fedi.Status
+	for k, v := range history.LastStatus {
+		fmt.Println("initial user: " + k + ", last status: " + v)
+	}
 
 	for _, user := range followedUsers {
-		userStatuses, err := fedi.GetUserStatuses(user, "0", instanceURL, accessToken)
-		if err != nil {
-			log.Fatal(err)
+		sinceID := history.LastStatus[user.ID]
+		if len(sinceID) <= 0 {
+			sinceID = "0"
 		}
 
-		for _, status := range userStatuses {
-			status, err := cleanStatus(status)
+		for retrievedStatuses, err := fedi.GetUserStatuses(user, sinceID, instanceURL, accessToken); len(retrievedStatuses) > 0; retrievedStatuses, err = fedi.GetUserStatuses(user, sinceID, instanceURL, accessToken) {
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println(err)
+				break
 			}
-			if len(status.Text) > 0 {
-				retrievedStatuses = append(retrievedStatuses, status)
+			fmt.Println("getting statuses from user: " + user.ID + ", from id: " + sinceID)
+
+			for _, status := range retrievedStatuses {
+				cleanedContent, err := cleanStatus(status.Content)
+				if err != nil {
+					fmt.Println(err)
+				}
+				if len(cleanedContent) > 0 {
+					history.Statuses[status.ID] = HistoryStatus{AuthorID: status.Account.ID, Text: cleanedContent}
+				}
+				sinceID = status.ID
+				history.LastStatus[user.ID] = sinceID
 			}
+
+			SaveToGob(history, historyFilePath)
 		}
 	}
 
-	return retrievedStatuses
 }
 
 // Cleans the status HTML into a manageable string
 // Taken from https://github.com/Lynnesbian/mstdn-ebooks/blob/master/functions.py
-func cleanStatus(status fedi.Status) (fedi.Status, error) {
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(status.Content))
+func cleanStatus(content string) (string, error) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
-		return fedi.Status{}, err
+		return "", err
 	}
 
 	doc.Find("br").Each(func(i int, s *goquery.Selection) {
@@ -79,11 +98,9 @@ func cleanStatus(status fedi.Status) (fedi.Status, error) {
 	mastodonMentionRegex := regexp.MustCompile(`https:\/\/([^/]+)\/(@[^\s]+)`)
 	pleromaMentionRegex := regexp.MustCompile(`https:\/\/([^/]+)\/users\/([^\s/]+)`)
 
-	text = mastodonMentionRegex.ReplaceAllString(text, "@$2@$1")
+	text = mastodonMentionRegex.ReplaceAllString(text, "$2@$1")
 	text = pleromaMentionRegex.ReplaceAllString(text, "@$2@$1")
 	text = strings.TrimSpace(text)
 
-	status.Text = text
-
-	return status, nil
+	return text, nil
 }

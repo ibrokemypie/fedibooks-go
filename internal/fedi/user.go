@@ -85,6 +85,7 @@ func GetUserStatuses(user Account, sinceID, instanceURL, accessToken string) ([]
 	_, err = resty.New().R().
 		SetAuthToken(accessToken).
 		SetQueryParam("min_id", sinceID).
+		SetQueryParam("exclude_reblogs", "true").
 		SetResult(&result).
 		Get(u.String())
 	if err != nil {
