@@ -40,31 +40,33 @@ func HandleReplies(history *History, instanceURL, accessToken, postVisibility st
 	for {
 		notification := <-notificationChannel
 
-		botUser, err := fedi.GetCurrentUser(instanceURL, accessToken)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+		if notification.Type == "mention" {
+			botUser, err := fedi.GetCurrentUser(instanceURL, accessToken)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 
-		// dont reply to yourself
-		if notification.Account.ID == botUser.ID {
-			continue
-		}
+			// dont reply to yourself
+			if notification.Account.ID == botUser.ID {
+				continue
+			}
 
-		followedUsers, err := fedi.GetUserFollowing(botUser, instanceURL, accessToken)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+			followedUsers, err := fedi.GetUserFollowing(botUser, instanceURL, accessToken)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 
-		// mention the person we are replying to
-		replyMention := "@" + notification.Status.Account.Acct
-		quote := replyMention + " " + GenQuote(history, followedUsers, maxWords)
+			// mention the person we are replying to
+			replyMention := "@" + notification.Status.Account.Acct
+			quote := replyMention + " " + GenQuote(history, followedUsers, maxWords)
 
-		err = fedi.PostStatus(quote, postVisibility, notification.Status, instanceURL, accessToken)
-		if err != nil {
-			fmt.Println(err)
-			continue
+			err = fedi.PostStatus(quote, postVisibility, notification.Status, instanceURL, accessToken)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 		}
 	}
 }
