@@ -102,7 +102,7 @@ func (c *Chain) Build(r io.Reader) {
 }
 
 // Generate returns a string of at most n words generated from Chain.
-func (c *Chain) Generate(length int, maxOverlapRatio float64, maxOverLapTotal, tries int) string {
+func (c *Chain) Generate(maxWords, minWords int, maxOverlapRatio float64, maxOverLapTotal, tries int) string {
 	if tries == 0 {
 		tries = 10
 	}
@@ -112,11 +112,14 @@ func (c *Chain) Generate(length int, maxOverlapRatio float64, maxOverLapTotal, t
 	if maxOverLapTotal == 0 {
 		maxOverLapTotal = 15
 	}
+	if maxOverLapTotal == 0 {
+		maxOverLapTotal = 15
+	}
 
 	for i := 0; i < tries; i++ {
 		p := make(Prefix, c.prefixLen)
 		var words []string
-		for i := 0; i < length; i++ {
+		for i := 0; i < maxWords; i++ {
 			choices := c.chain[p.String()]
 			if len(choices) == 0 {
 				break
@@ -126,7 +129,7 @@ func (c *Chain) Generate(length int, maxOverlapRatio float64, maxOverLapTotal, t
 			p.Shift(next)
 		}
 
-		if c.TestOutput(words, maxOverlapRatio, float64(maxOverLapTotal)) {
+		if c.TestOutput(words, maxOverlapRatio, float64(maxOverLapTotal)) && len(words) > minWords {
 			return strings.Join(words, " ")
 		}
 	}
@@ -142,7 +145,11 @@ func (c *Chain) TestOutput(words []string, maxOverlapRatio, maxOverlapTotal floa
 	gramCount := math.Max(float64(len(words))-overlapMax, 1)
 	var grams [][]string
 	for i := 0; i < int(gramCount); i++ {
-		grams = append(grams, words[i:i+int(overlapOver)])
+		num := len(words)
+		if overlapOver < float64(num) {
+			num = int(overlapOver)
+		}
+		grams = append(grams, words[i:i+num])
 	}
 	for _, g := range grams {
 		gramJoined := strings.Join(g, "")
@@ -173,7 +180,7 @@ func GenQuote(history *History, followedUsers []fedi.Account, maxWords int) stri
 		}
 
 	}
-	text := c.Generate(maxWords, 0, 0, 10000)
+	text := c.Generate(maxWords, 1, 0, 0, 10000)
 	// break generated mentions
 	text = strings.ReplaceAll(text, "@", "@\u200B")
 	return text
