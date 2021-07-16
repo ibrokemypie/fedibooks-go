@@ -51,7 +51,6 @@ import (
 	"io"
 	"math/rand"
 	"strings"
-	"time"
 
 	"github.com/ibrokemypie/fedibooks-go/internal/fedi"
 )
@@ -116,7 +115,6 @@ func (c *Chain) Generate(n int) string {
 }
 
 func GenQuote(history *History, followedUsers []fedi.Account, maxWords int) string {
-	rand.Seed(time.Now().UnixNano())
 	c := NewChain(2)
 
 	for _, s := range history.Statuses {

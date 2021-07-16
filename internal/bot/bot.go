@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/ibrokemypie/fedibooks-go/internal/fedi"
@@ -21,6 +22,8 @@ func InitBot() {
 
 	history := LoadFromGob(historyFilePath)
 
+	rand.Seed(time.Now().UnixNano())
+
 	go GetStatusesLoop(history, historyFilePath, instanceURL, accessToken, getPostInterval, learnFromCW, maxStoredStatuses)
 
 	go PostQuotesLoop(history, instanceURL, accessToken, makePostInterval, postVisibility, maxWords)
@@ -36,17 +39,28 @@ func HandleReplies(history *History, instanceURL, accessToken, postVisibility st
 
 	for {
 		notification := <-notificationChannel
+
 		botUser, err := fedi.GetCurrentUser(instanceURL, accessToken)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
+
+		// dont reply to yourself
+		if notification.Account.ID == botUser.ID {
+			continue
+		}
+
 		followedUsers, err := fedi.GetUserFollowing(botUser, instanceURL, accessToken)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
-		quote := GenQuote(history, followedUsers, maxWords)
+
+		// mention the person we are replying to
+		replyMention := "@" + notification.Status.Account.Acct
+		quote := replyMention + " " + GenQuote(history, followedUsers, maxWords)
+
 		err = fedi.PostStatus(quote, postVisibility, notification.Status, instanceURL, accessToken)
 		if err != nil {
 			fmt.Println(err)
