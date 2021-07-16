@@ -1,8 +1,11 @@
 package bot
 
 import (
+	"encoding/gob"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -121,4 +124,50 @@ func cleanStatus(content string) (string, error) {
 	text = strings.TrimSpace(text)
 
 	return text, nil
+}
+
+func LoadFromGob(historyFilePath string) History {
+	historyFile, err := os.OpenFile(historyFilePath, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer historyFile.Close()
+
+	var history History
+	decoder := gob.NewDecoder(historyFile)
+
+	err = decoder.Decode(&history)
+	if err != nil {
+		return History{LastStatus: make(map[string]string), Statuses: make(map[string]HistoryStatus)}
+	}
+
+	return history
+}
+
+func SaveToGob(history *History, historyFilePath string) {
+	historyFile, err := os.OpenFile(historyFilePath, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer historyFile.Close()
+
+	// backup the original file before modifying it
+	historyFileBak, err := os.Create(historyFilePath + ".bak")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer historyFileBak.Close()
+
+	_, err = io.Copy(historyFileBak, historyFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = historyFileBak.Sync()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	encoder := gob.NewEncoder(historyFile)
+	encoder.Encode(history)
 }

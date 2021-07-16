@@ -51,6 +51,7 @@ import (
 	"io"
 	"math/rand"
 	"strings"
+	"time"
 )
 
 // Prefix is a Markov chain prefix of one or more words.
@@ -110,4 +111,15 @@ func (c *Chain) Generate(n int) string {
 		p.Shift(next)
 	}
 	return strings.Join(words, " ")
+}
+
+func GenQuote(statuses *map[string]HistoryStatus) string {
+	rand.Seed(time.Now().UnixNano())
+	c := NewChain(2)
+
+	for _, s := range *statuses {
+		c.Build(strings.NewReader(s.Text))
+	}
+	text := c.Generate(20) // Generate text.
+	return text
 }
