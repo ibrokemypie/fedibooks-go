@@ -19,9 +19,9 @@ func InitBot() {
 
 	history := LoadFromGob(historyFilePath)
 
-	go GetStatusesLoop(&history, historyFilePath, instanceURL, accessToken, getPostInterval, learnFromCW, maxStoredStatuses)
+	go GetStatusesLoop(history, historyFilePath, instanceURL, accessToken, getPostInterval, learnFromCW, maxStoredStatuses)
 
-	go PostQuotesLoop(&history.Statuses, instanceURL, accessToken, makePostInterval, postVisibility)
+	go PostQuotesLoop(history, instanceURL, accessToken, makePostInterval, postVisibility)
 
 	select {}
 }
@@ -33,9 +33,9 @@ func GetStatusesLoop(history *History, historyFilePath string, instanceURL, acce
 	}
 }
 
-func PostQuotesLoop(statuses *map[string]HistoryStatus, instanceURL, accessToken string, interval int, postVisibility string) {
+func PostQuotesLoop(history *History, instanceURL, accessToken string, interval int, postVisibility string) {
 	for {
-		quote := GenQuote(statuses)
+		quote := GenQuote(history)
 		fedi.PostStatus(quote, postVisibility, fedi.Status{}, instanceURL, accessToken)
 		time.Sleep(time.Duration(interval) * time.Minute)
 	}

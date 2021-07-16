@@ -113,11 +113,11 @@ func (c *Chain) Generate(n int) string {
 	return strings.Join(words, " ")
 }
 
-func GenQuote(statuses *map[string]HistoryStatus) string {
+func GenQuote(history *History) string {
 	rand.Seed(time.Now().UnixNano())
 	c := NewChain(2)
 
-	for _, s := range *statuses {
+	for _, s := range history.Statuses {
 		c.Build(strings.NewReader(s.Text))
 	}
 	text := c.Generate(20) // Generate text.

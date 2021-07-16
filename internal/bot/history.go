@@ -126,19 +126,19 @@ func cleanStatus(content string) (string, error) {
 	return text, nil
 }
 
-func LoadFromGob(historyFilePath string) History {
+func LoadFromGob(historyFilePath string) *History {
 	historyFile, err := os.OpenFile(historyFilePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer historyFile.Close()
 
-	var history History
+	var history *History
 	decoder := gob.NewDecoder(historyFile)
 
 	err = decoder.Decode(&history)
 	if err != nil {
-		return History{LastStatus: make(map[string]string), Statuses: make(map[string]HistoryStatus)}
+		history = &History{LastStatus: make(map[string]string), Statuses: make(map[string]HistoryStatus)}
 	}
 
 	return history
