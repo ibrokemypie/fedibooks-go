@@ -22,6 +22,10 @@ func InitBot() {
 
 	history := LoadFromGob(historyFilePath)
 
+	for k, v := range history.LastStatus {
+		fmt.Println("Last status for user " + k + ": " + v)
+	}
+
 	rand.Seed(time.Now().UnixNano())
 
 	go GetStatusesLoop(history, historyFilePath, instanceURL, accessToken, getPostInterval, learnFromCW, maxStoredStatuses)

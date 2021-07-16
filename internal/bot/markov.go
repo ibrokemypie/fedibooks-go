@@ -49,6 +49,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"math"
 	"math/rand"
 	"strings"
 
@@ -75,11 +76,12 @@ func (p Prefix) Shift(word string) {
 type Chain struct {
 	chain     map[string][]string
 	prefixLen int
+	sentences [][]string
 }
 
 // NewChain returns a new Chain with prefixes of prefixLen words.
 func NewChain(prefixLen int) *Chain {
-	return &Chain{make(map[string][]string), prefixLen}
+	return &Chain{make(map[string][]string), prefixLen, [][]string{}}
 }
 
 // Build reads text from the provided Reader and
@@ -92,6 +94,7 @@ func (c *Chain) Build(r io.Reader) {
 		if _, err := fmt.Fscan(br, &s); err != nil {
 			break
 		}
+		c.sentences = append(c.sentences, strings.Fields(s))
 		key := p.String()
 		c.chain[key] = append(c.chain[key], s)
 		p.Shift(s)
@@ -99,19 +102,64 @@ func (c *Chain) Build(r io.Reader) {
 }
 
 // Generate returns a string of at most n words generated from Chain.
-func (c *Chain) Generate(n int) string {
-	p := make(Prefix, c.prefixLen)
-	var words []string
-	for i := 0; i < n; i++ {
-		choices := c.chain[p.String()]
-		if len(choices) == 0 {
-			break
-		}
-		next := choices[rand.Intn(len(choices))]
-		words = append(words, next)
-		p.Shift(next)
+func (c *Chain) Generate(length int, maxOverlapRatio float64, maxOverLapTotal, tries int) string {
+	if tries == 0 {
+		tries = 10
 	}
-	return strings.Join(words, " ")
+	if maxOverlapRatio == 0 {
+		maxOverlapRatio = 0.7
+	}
+	if maxOverLapTotal == 0 {
+		maxOverLapTotal = 15
+	}
+
+	for i := 0; i < tries; i++ {
+		p := make(Prefix, c.prefixLen)
+		var words []string
+		for i := 0; i < length; i++ {
+			choices := c.chain[p.String()]
+			if len(choices) == 0 {
+				break
+			}
+			next := choices[rand.Intn(len(choices))]
+			words = append(words, next)
+			p.Shift(next)
+		}
+
+		if c.TestOutput(words, maxOverlapRatio, float64(maxOverLapTotal)) {
+			return strings.Join(words, " ")
+		}
+	}
+	return ""
+}
+
+// Taken from https://github.com/jsvine/markovify/blob/master/markovify/text.py#L155
+func (c *Chain) TestOutput(words []string, maxOverlapRatio, maxOverlapTotal float64) bool {
+	overlapRatio := math.Round(maxOverlapRatio * float64(len(words)))
+	overlapMax := math.Min(maxOverlapTotal, overlapRatio)
+	overlapOver := overlapMax + 1
+
+	gramCount := math.Max(float64(len(words))-overlapMax, 1)
+	var grams [][]string
+	for i := 0; i < int(gramCount); i++ {
+		grams = append(grams, words[i:i+int(overlapOver)])
+	}
+	for _, g := range grams {
+		gramJoined := strings.Join(g, "")
+		if strings.Contains(c.RejoinedText(), gramJoined) {
+			return false
+		}
+	}
+	return true
+}
+
+func (c *Chain) RejoinedText() string {
+	var sentencesJoined []string
+	for _, sentence := range c.sentences {
+		sentencesJoined = append(sentencesJoined, strings.Join(sentence, " "))
+	}
+
+	return strings.Join(sentencesJoined, " ")
 }
 
 func GenQuote(history *History, followedUsers []fedi.Account, maxWords int) string {
@@ -125,7 +173,7 @@ func GenQuote(history *History, followedUsers []fedi.Account, maxWords int) stri
 		}
 
 	}
-	text := c.Generate(maxWords)
+	text := c.Generate(maxWords, 0, 0, 10000)
 	// break generated mentions
 	text = strings.ReplaceAll(text, "@", "@\u200B")
 	return text
