@@ -13,6 +13,9 @@ func LoadConfig() {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 
+	viper.SetDefault("make_post_interval", 30)
+	viper.SetDefault("get_posts_interval", 30)
+
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			pwd, err := os.Getwd()
