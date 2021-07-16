@@ -14,7 +14,7 @@ func InitBot() {
 	makePostInterval := viper.GetInt("make_post_interval")
 	learnFromCW := viper.GetBool("learn_from_cw")
 	historyFilePath := viper.GetString("history.file_path")
-	maxStoredStatuses := viper.GetInt("history.length")
+	maxStoredStatuses := viper.GetInt("history.max_length")
 
 	history := LoadFromGob(historyFilePath)
 

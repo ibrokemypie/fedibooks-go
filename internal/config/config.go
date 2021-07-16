@@ -2,38 +2,36 @@ package config
 
 import (
 	"fmt"
-	"os"
+	"log"
+	"path/filepath"
+	"strings"
 
 	"github.com/ibrokemypie/magickbot/pkg/auth"
 	"github.com/spf13/viper"
 )
 
-func LoadConfig() {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
+func LoadConfig(configFile string) {
+	viper.SetConfigName(strings.TrimSuffix(filepath.Base(configFile), filepath.Ext(configFile)))
+	viper.SetConfigType(strings.TrimPrefix(filepath.Ext(configFile), "."))
+	viper.AddConfigPath(filepath.Dir(configFile))
 
 	viper.SetDefault("make_post_interval", 30)
 	viper.SetDefault("get_posts_interval", 30)
 	viper.SetDefault("learn_from_cw", false)
 	viper.SetDefault("history.file_path", "./history.gob")
-	viper.SetDefault("history.length", 100000)
+	viper.SetDefault("history.max_length", 100000)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			pwd, err := os.Getwd()
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println("Config file not found, creating one at " + pwd)
+			fmt.Println("Config file not found, creating one at " + filepath.Dir(configFile))
 
 			// attempt to write a new config file
 			if err := viper.SafeWriteConfig(); err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 		} else {
 			// Config file was found but another error was produced
-			panic(err)
+			log.Fatal(err)
 		}
 	}
 
