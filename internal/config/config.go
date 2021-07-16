@@ -16,6 +16,7 @@ func LoadConfig() {
 	viper.SetDefault("make_post_interval", 30)
 	viper.SetDefault("get_posts_interval", 30)
 	viper.SetDefault("learn_from_cw", false)
+	viper.SetDefault("history_file_path", "./history.gob")
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

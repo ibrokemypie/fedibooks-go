@@ -18,8 +18,7 @@ func InitBot() {
 	getPostInterval := viper.GetInt("get_posts_interval")
 	makePostInterval := viper.GetInt("make_post_interval")
 	learnFromCW := viper.GetBool("learn_from_cw")
-
-	historyFilePath := "./history.gob"
+	historyFilePath := viper.GetString("history_file_path")
 
 	history := LoadFromGob(historyFilePath)
 
