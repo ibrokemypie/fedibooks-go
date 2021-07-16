@@ -17,21 +17,22 @@ func InitBot() {
 	accessToken := viper.GetString("instance.access_token")
 	getPostInterval := viper.GetInt("get_posts_interval")
 	makePostInterval := viper.GetInt("make_post_interval")
+	learnFromCW := viper.GetBool("learn_from_cw")
 
 	historyFilePath := "./history.gob"
 
 	history := LoadFromGob(historyFilePath)
 
-	go GetStatusesLoop(&history, historyFilePath, instanceURL, accessToken, getPostInterval)
+	go GetStatusesLoop(&history, historyFilePath, instanceURL, accessToken, getPostInterval, learnFromCW)
 
 	go PostQuotesLoop(&history.Statuses, instanceURL, accessToken, makePostInterval)
 
 	select {}
 }
 
-func GetStatusesLoop(history *History, historyFilePath string, instanceURL, accessToken string, interval int) {
+func GetStatusesLoop(history *History, historyFilePath string, instanceURL, accessToken string, interval int, learnFromCW bool) {
 	for {
-		GetNewStatuses(history, historyFilePath, instanceURL, accessToken)
+		GetNewStatuses(history, historyFilePath, instanceURL, accessToken, learnFromCW)
 		time.Sleep(time.Duration(interval) * time.Minute)
 	}
 }

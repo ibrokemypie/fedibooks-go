@@ -16,6 +16,7 @@ type Status struct {
 	Account    Account   `json:"account"`
 	Sensitive  bool      `json:"sensitive"`
 	Visibility string    `json:"visibility"`
+	CW         string    `json:"spoiler_text"`
 	Mentions   []Account `json:"mentions"`
 }
 

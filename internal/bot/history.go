@@ -20,7 +20,7 @@ type HistoryStatus struct {
 	Text     string
 }
 
-func GetNewStatuses(history *History, historyFilePath string, instanceURL, accessToken string) {
+func GetNewStatuses(history *History, historyFilePath string, instanceURL, accessToken string, learnFromCW bool) {
 	botUser, err := fedi.GetCurrentUser(instanceURL, accessToken)
 	if err != nil {
 		log.Fatal(err)
@@ -53,7 +53,9 @@ func GetNewStatuses(history *History, historyFilePath string, instanceURL, acces
 					fmt.Println(err)
 				}
 				if len(cleanedContent) > 0 {
-					history.Statuses[status.ID] = HistoryStatus{AuthorID: status.Account.ID, Text: cleanedContent}
+					if learnFromCW || (!learnFromCW && len(status.CW) == 0 && !status.Sensitive) {
+						history.Statuses[status.ID] = HistoryStatus{AuthorID: status.Account.ID, Text: cleanedContent}
+					}
 				}
 				sinceID = status.ID
 				history.LastStatus[user.ID] = sinceID
