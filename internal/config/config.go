@@ -15,12 +15,13 @@ func LoadConfig(configFile string) {
 	viper.SetConfigType(strings.TrimPrefix(filepath.Ext(configFile), "."))
 	viper.AddConfigPath(filepath.Dir(configFile))
 
-	viper.SetDefault("make_post_interval", 30)
-	viper.SetDefault("get_posts_interval", 30)
-	viper.SetDefault("learn_from_cw", false)
+	viper.SetDefault("post.make_interval", 30)
+	viper.SetDefault("post.max_words", 30)
+	viper.SetDefault("post.visibility", "unlisted")
+	viper.SetDefault("history.get_interval", 30)
+	viper.SetDefault("history.learn_from_cw", false)
 	viper.SetDefault("history.file_path", "./history.gob")
 	viper.SetDefault("history.max_length", 100000)
-	viper.SetDefault("post_visibility", "unlisted")
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

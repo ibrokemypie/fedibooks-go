@@ -11,25 +11,26 @@ import (
 func InitBot() {
 	instanceURL := viper.GetString("instance.url")
 	accessToken := viper.GetString("instance.access_token")
-	getPostInterval := viper.GetInt("get_posts_interval")
-	makePostInterval := viper.GetInt("make_post_interval")
-	learnFromCW := viper.GetBool("learn_from_cw")
+	makePostInterval := viper.GetInt("post.make_interval")
+	postVisibility := viper.GetString("post.visibility")
+	maxWords := viper.GetInt("post.max_words")
+	getPostInterval := viper.GetInt("history.get_interval")
+	learnFromCW := viper.GetBool("history.learn_from_cw")
 	historyFilePath := viper.GetString("history.file_path")
 	maxStoredStatuses := viper.GetInt("history.max_length")
-	postVisibility := viper.GetString("post_visibility")
 
 	history := LoadFromGob(historyFilePath)
 
 	go GetStatusesLoop(history, historyFilePath, instanceURL, accessToken, getPostInterval, learnFromCW, maxStoredStatuses)
 
-	go PostQuotesLoop(history, instanceURL, accessToken, makePostInterval, postVisibility)
+	go PostQuotesLoop(history, instanceURL, accessToken, makePostInterval, postVisibility, maxWords)
 
-	go HandleReplies(history, instanceURL, accessToken, postVisibility)
+	go HandleReplies(history, instanceURL, accessToken, postVisibility, maxWords)
 
 	select {}
 }
 
-func HandleReplies(history *History, instanceURL, accessToken, postVisibility string) {
+func HandleReplies(history *History, instanceURL, accessToken, postVisibility string, maxWords int) {
 	notificationChannel := make(chan fedi.Notification)
 	go fedi.NotificationStream(notificationChannel, instanceURL, accessToken)
 
@@ -45,7 +46,7 @@ func HandleReplies(history *History, instanceURL, accessToken, postVisibility st
 			fmt.Println(err)
 			continue
 		}
-		quote := GenQuote(history, followedUsers)
+		quote := GenQuote(history, followedUsers, maxWords)
 		err = fedi.PostStatus(quote, postVisibility, notification.Status, instanceURL, accessToken)
 		if err != nil {
 			fmt.Println(err)
@@ -61,7 +62,7 @@ func GetStatusesLoop(history *History, historyFilePath string, instanceURL, acce
 	}
 }
 
-func PostQuotesLoop(history *History, instanceURL, accessToken string, interval int, postVisibility string) {
+func PostQuotesLoop(history *History, instanceURL, accessToken string, interval int, postVisibility string, maxWords int) {
 	for {
 		botUser, err := fedi.GetCurrentUser(instanceURL, accessToken)
 		if err != nil {
@@ -73,7 +74,7 @@ func PostQuotesLoop(history *History, instanceURL, accessToken string, interval 
 			fmt.Println(err)
 			continue
 		}
-		quote := GenQuote(history, followedUsers)
+		quote := GenQuote(history, followedUsers, maxWords)
 		err = fedi.PostStatus(quote, postVisibility, fedi.Status{}, instanceURL, accessToken)
 		if err != nil {
 			fmt.Println(err)

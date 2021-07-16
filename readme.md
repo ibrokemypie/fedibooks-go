@@ -21,25 +21,29 @@ Optionally ``fedibooks-go`` can be used with the ``-c`` flag to use a specified 
 Sample Config:
 
 ```yaml
-get_posts_interval: 30
 history:
   file_path: ./history.gob
+  get_interval: 30
+  learn_from_cw: false
   max_length: 100000
 instance:
   access_token: xxxxxxxx
   url: https://mastodon.social
-learn_from_cw: false
-make_post_interval: 30
-post_visibility: unlisted
+post:
+  make_interval: 30
+  max_words: 30
+  visibility: unlisted
 ```
 
 |Setting|Description|
 |---|---|
-|get_posts_interval|Interval in minutes to try to retrieve new posts from followed users|
-|make_post_interval|Interval in minutes to generate a new post|
-|learn_from_cw|Whether to learn from sensitive/CW'd posts|
-|post_visibility|Visibility of generated posts|
-|instance.access_token|OAuth access token. Generated on first run|
-|instance.url|Bot's instance URL. Generated on first run|
+|history.get_interval|Interval in minutes to try to retrieve new posts from followed users|
+|history.learn_from_cw|Whether to learn from sensitive/CW'd posts|
 |history.file_path|Path and name of history file on disk|
 |history.max_length|Maximum number of statuses to store and generate from|
+|post.visibility|Visibility of generated posts|
+|post.make_interval|Interval in minutes to generate a new post|
+|post.max_words|Maximum numqber of words to generate per post|
+|instance.access_token|OAuth access token. Generated on first run|
+|instance.url|Bot's instance URL. Generated on first run|
+

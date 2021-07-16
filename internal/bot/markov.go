@@ -115,7 +115,7 @@ func (c *Chain) Generate(n int) string {
 	return strings.Join(words, " ")
 }
 
-func GenQuote(history *History, followedUsers []fedi.Account) string {
+func GenQuote(history *History, followedUsers []fedi.Account, maxWords int) string {
 	rand.Seed(time.Now().UnixNano())
 	c := NewChain(2)
 
@@ -127,7 +127,7 @@ func GenQuote(history *History, followedUsers []fedi.Account) string {
 		}
 
 	}
-	text := c.Generate(20) // Generate text.
+	text := c.Generate(maxWords)
 	// break generated mentions
 	text = strings.ReplaceAll(text, "@", "@\u200B")
 	return text
