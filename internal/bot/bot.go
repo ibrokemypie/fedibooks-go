@@ -24,7 +24,34 @@ func InitBot() {
 
 	go PostQuotesLoop(history, instanceURL, accessToken, makePostInterval, postVisibility)
 
+	go HandleReplies(history, instanceURL, accessToken, postVisibility)
+
 	select {}
+}
+
+func HandleReplies(history *History, instanceURL, accessToken, postVisibility string) {
+	notificationChannel := make(chan fedi.Notification)
+	go fedi.NotificationStream(notificationChannel, instanceURL, accessToken)
+
+	for {
+		notification := <-notificationChannel
+		botUser, err := fedi.GetCurrentUser(instanceURL, accessToken)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		followedUsers, err := fedi.GetUserFollowing(botUser, instanceURL, accessToken)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		quote := GenQuote(history, followedUsers)
+		err = fedi.PostStatus(quote, postVisibility, notification.Status, instanceURL, accessToken)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+	}
 }
 
 func GetStatusesLoop(history *History, historyFilePath string, instanceURL, accessToken string, interval int, learnFromCW bool, maxStoredStatuses int) {
