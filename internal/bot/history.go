@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -20,7 +21,7 @@ type HistoryStatus struct {
 	Text     string
 }
 
-func GetNewStatuses(history *History, historyFilePath string, instanceURL, accessToken string, learnFromCW bool) {
+func GetNewStatuses(history *History, historyFilePath string, instanceURL, accessToken string, learnFromCW bool, maxStoredStatuses int) {
 	botUser, err := fedi.GetCurrentUser(instanceURL, accessToken)
 	if err != nil {
 		log.Fatal(err)
@@ -65,6 +66,19 @@ func GetNewStatuses(history *History, historyFilePath string, instanceURL, acces
 		}
 	}
 
+	if len(history.Statuses) > maxStoredStatuses {
+		postsToClean := len(history.Statuses) - maxStoredStatuses
+		keys := make([]string, 0, len(history.Statuses))
+		for k := range history.Statuses {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for i := 0; i <= postsToClean; i++ {
+			delete(history.Statuses, keys[i])
+		}
+		SaveToGob(history, historyFilePath)
+	}
 }
 
 // Cleans the status HTML into a manageable string
