@@ -52,6 +52,8 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/ibrokemypie/fedibooks-go/internal/fedi"
 )
 
 // Prefix is a Markov chain prefix of one or more words.
@@ -113,12 +115,17 @@ func (c *Chain) Generate(n int) string {
 	return strings.Join(words, " ")
 }
 
-func GenQuote(history *History) string {
+func GenQuote(history *History, followedUsers []fedi.Account) string {
 	rand.Seed(time.Now().UnixNano())
 	c := NewChain(2)
 
 	for _, s := range history.Statuses {
-		c.Build(strings.NewReader(s.Text))
+		for _, u := range followedUsers {
+			if s.AuthorID == u.ID {
+				c.Build(strings.NewReader(s.Text))
+			}
+		}
+
 	}
 	text := c.Generate(20) // Generate text.
 	return text

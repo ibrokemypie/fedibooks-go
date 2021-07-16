@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ibrokemypie/fedibooks-go/internal/fedi"
@@ -35,8 +36,22 @@ func GetStatusesLoop(history *History, historyFilePath string, instanceURL, acce
 
 func PostQuotesLoop(history *History, instanceURL, accessToken string, interval int, postVisibility string) {
 	for {
-		quote := GenQuote(history)
-		fedi.PostStatus(quote, postVisibility, fedi.Status{}, instanceURL, accessToken)
+		botUser, err := fedi.GetCurrentUser(instanceURL, accessToken)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		followedUsers, err := fedi.GetUserFollowing(botUser, instanceURL, accessToken)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		quote := GenQuote(history, followedUsers)
+		err = fedi.PostStatus(quote, postVisibility, fedi.Status{}, instanceURL, accessToken)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
 		time.Sleep(time.Duration(interval) * time.Minute)
 	}
 }
