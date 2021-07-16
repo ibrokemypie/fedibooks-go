@@ -128,5 +128,7 @@ func GenQuote(history *History, followedUsers []fedi.Account) string {
 
 	}
 	text := c.Generate(20) // Generate text.
+	// break generated mentions
+	text = strings.ReplaceAll(text, "@", "@\u200B")
 	return text
 }

@@ -120,8 +120,8 @@ func cleanStatus(content string) (string, error) {
 
 	// replace mentions with fake text only mentions
 	// zero width space after the username to preventactually mentioning someone
-	text = mastodonMentionRegex.ReplaceAllString(text, "$2\u200B@$1")
-	text = pleromaMentionRegex.ReplaceAllString(text, "@$2\u200B@$1")
+	text = mastodonMentionRegex.ReplaceAllString(text, "$2@$1")
+	text = pleromaMentionRegex.ReplaceAllString(text, "@$2@$1")
 	text = strings.TrimSpace(text)
 
 	return text, nil
