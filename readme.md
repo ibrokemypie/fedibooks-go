@@ -35,10 +35,10 @@ post_visibility: unlisted
 
 |Setting|Description|
 |---|---|
-|get_posts_interval|interval in minutes to try to retrieve new posts from followed users|
-|make_post_interval|interval in minutes to generate a new post|
-|learn_from_cw|whether to learn from sensitive/CW'd posts|
-|post_visibility|visibility of generated posts|
+|get_posts_interval|Interval in minutes to try to retrieve new posts from followed users|
+|make_post_interval|Interval in minutes to generate a new post|
+|learn_from_cw|Whether to learn from sensitive/CW'd posts|
+|post_visibility|Visibility of generated posts|
 |instance.access_token|OAuth access token. Generated on first run|
 |instance.url|Bot's instance URL. Generated on first run|
 |history.file_path|Path and name of history file on disk|
