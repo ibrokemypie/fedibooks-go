@@ -20,6 +20,7 @@ func LoadConfig(configFile string) {
 	viper.SetDefault("learn_from_cw", false)
 	viper.SetDefault("history.file_path", "./history.gob")
 	viper.SetDefault("history.max_length", 100000)
+	viper.SetDefault("post_visibility", "unlisted")
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

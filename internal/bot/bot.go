@@ -15,12 +15,13 @@ func InitBot() {
 	learnFromCW := viper.GetBool("learn_from_cw")
 	historyFilePath := viper.GetString("history.file_path")
 	maxStoredStatuses := viper.GetInt("history.max_length")
+	postVisibility := viper.GetString("post_visibility")
 
 	history := LoadFromGob(historyFilePath)
 
 	go GetStatusesLoop(&history, historyFilePath, instanceURL, accessToken, getPostInterval, learnFromCW, maxStoredStatuses)
 
-	go PostQuotesLoop(&history.Statuses, instanceURL, accessToken, makePostInterval)
+	go PostQuotesLoop(&history.Statuses, instanceURL, accessToken, makePostInterval, postVisibility)
 
 	select {}
 }
@@ -32,10 +33,10 @@ func GetStatusesLoop(history *History, historyFilePath string, instanceURL, acce
 	}
 }
 
-func PostQuotesLoop(statuses *map[string]HistoryStatus, instanceURL, accessToken string, interval int) {
+func PostQuotesLoop(statuses *map[string]HistoryStatus, instanceURL, accessToken string, interval int, postVisibility string) {
 	for {
 		quote := GenQuote(statuses)
-		fedi.PostStatus(quote, "unlisted", fedi.Status{}, instanceURL, accessToken)
+		fedi.PostStatus(quote, postVisibility, fedi.Status{}, instanceURL, accessToken)
 		time.Sleep(time.Duration(interval) * time.Minute)
 	}
 }
