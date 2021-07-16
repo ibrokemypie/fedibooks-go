@@ -2,7 +2,6 @@ package fedi
 
 import (
 	"net/url"
-	"strconv"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -41,7 +40,7 @@ func GetStatus(id, instanceURL, accessToken string) (Status, error) {
 }
 
 // PostStatus - Posts a text status
-func PostStatus(contents, visibility string, replyTo Status, instanceURL, accessToken string) error {
+func PostStatus(contents, visibility, replyToID, sensitive, instanceURL, accessToken string) error {
 	u, err := url.Parse(instanceURL + "/api/v1/statuses")
 	if err != nil {
 		return err
@@ -50,10 +49,10 @@ func PostStatus(contents, visibility string, replyTo Status, instanceURL, access
 	_, err = resty.New().R().
 		SetAuthToken(accessToken).
 		SetFormDataFromValues(url.Values{
-			"in_reply_to_id": []string{replyTo.ID},
+			"in_reply_to_id": []string{replyToID},
 			"status":         []string{contents},
 			"visibility":     []string{visibility},
-			"sensitive":      []string{strconv.FormatBool(replyTo.Sensitive)},
+			"sensitive":      []string{sensitive},
 		}).
 		Post(u.String())
 	if err != nil {

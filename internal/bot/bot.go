@@ -62,7 +62,7 @@ func HandleReplies(history *History, instanceURL, accessToken, postVisibility st
 			replyMention := "@" + notification.Status.Account.Acct
 			quote := replyMention + " " + GenQuote(history, followedUsers, maxWords)
 
-			err = fedi.PostStatus(quote, postVisibility, notification.Status, instanceURL, accessToken)
+			err = fedi.PostStatus(quote, postVisibility, notification.Status.ID, "false", instanceURL, accessToken)
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -91,7 +91,7 @@ func PostQuotesLoop(history *History, instanceURL, accessToken string, interval 
 			continue
 		}
 		quote := GenQuote(history, followedUsers, maxWords)
-		err = fedi.PostStatus(quote, postVisibility, fedi.Status{}, instanceURL, accessToken)
+		err = fedi.PostStatus(quote, postVisibility, "", "false", instanceURL, accessToken)
 		if err != nil {
 			fmt.Println(err)
 			continue
