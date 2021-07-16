@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -34,22 +35,19 @@ func GetNewStatuses(history *History, historyFilePath string, instanceURL, acces
 		log.Fatal(err)
 	}
 
-	for k, v := range history.LastStatus {
-		fmt.Println("initial user: " + k + ", last status: " + v)
-	}
-
 	for _, user := range followedUsers {
 		sinceID := history.LastStatus[user.ID]
 		if len(sinceID) <= 0 {
 			sinceID = "0"
 		}
 
+		fmt.Println("Getting new statuses for user: " + user.ID)
+
 		for retrievedStatuses, err := fedi.GetUserStatuses(user, sinceID, instanceURL, accessToken); len(retrievedStatuses) > 0; retrievedStatuses, err = fedi.GetUserStatuses(user, sinceID, instanceURL, accessToken) {
 			if err != nil {
 				fmt.Println(err)
 				break
 			}
-			fmt.Println("getting statuses from user: " + user.ID + ", from id: " + sinceID)
 
 			for _, status := range retrievedStatuses {
 				cleanedContent, err := cleanStatus(status.Content)
@@ -71,6 +69,7 @@ func GetNewStatuses(history *History, historyFilePath string, instanceURL, acces
 
 	if len(history.Statuses) > maxStoredStatuses {
 		postsToClean := len(history.Statuses) - maxStoredStatuses
+		fmt.Println("History has reached length " + strconv.Itoa(len(history.Statuses)) + ", removing " + strconv.Itoa(postsToClean) + " oldest statuses.")
 		keys := make([]string, 0, len(history.Statuses))
 		for k := range history.Statuses {
 			keys = append(keys, k)
@@ -82,6 +81,8 @@ func GetNewStatuses(history *History, historyFilePath string, instanceURL, acces
 		}
 		SaveToGob(history, historyFilePath)
 	}
+
+	fmt.Println("Finished retrieving statuses.")
 }
 
 // Cleans the status HTML into a manageable string

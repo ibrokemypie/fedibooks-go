@@ -8,7 +8,7 @@ import (
 )
 
 func InitBot() {
-	instanceURL := viper.GetString("instance.instance_url")
+	instanceURL := viper.GetString("instance.url")
 	accessToken := viper.GetString("instance.access_token")
 	getPostInterval := viper.GetInt("get_posts_interval")
 	makePostInterval := viper.GetInt("make_post_interval")

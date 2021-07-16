@@ -36,10 +36,10 @@ func LoadConfig(configFile string) {
 		}
 	}
 
-	if !viper.IsSet("instance.instance_url") || !viper.IsSet("instance.access_token") {
+	if !viper.IsSet("instance.url") || !viper.IsSet("instance.access_token") {
 		instanceURL, accessToken := auth.Authorize()
 
-		viper.Set("instance.instance_url", instanceURL)
+		viper.Set("instance.url", instanceURL)
 		viper.Set("instance.access_token", accessToken)
 	}
 
