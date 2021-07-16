@@ -2,6 +2,7 @@ package bot
 
 import (
 	"encoding/gob"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -80,6 +81,23 @@ func SaveToGob(history *History, historyFilePath string) {
 		log.Fatal(err)
 	}
 	defer historyFile.Close()
+
+	// backup the original file before modifying it
+	historyFileBak, err := os.Create(historyFilePath + ".bak")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer historyFileBak.Close()
+
+	_, err = io.Copy(historyFileBak, historyFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = historyFileBak.Sync()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	encoder := gob.NewEncoder(historyFile)
 	encoder.Encode(history)
