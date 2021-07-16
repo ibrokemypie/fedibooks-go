@@ -6,9 +6,7 @@ Work in progress ebooks bot. Uses markov chains to generate random text from fol
 
 - Getting message history from remote instances.
 
-- Reply handling.
-
-- Max post length.
+- Max thread depth
 
 ## Usage
 
