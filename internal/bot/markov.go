@@ -102,18 +102,15 @@ func (c *Chain) Build(r io.Reader) {
 }
 
 // Generate returns a string of at most n words generated from Chain.
-func (c *Chain) Generate(maxWords, minWords int, maxOverlapRatio float64, maxOverLapTotal, tries int) string {
+func (c *Chain) Generate(maxWords, minWords int, maxOverlapRatio float64, maxOverlapTotal, tries int) string {
 	if tries == 0 {
 		tries = 10
 	}
 	if maxOverlapRatio == 0 {
 		maxOverlapRatio = 0.7
 	}
-	if maxOverLapTotal == 0 {
-		maxOverLapTotal = 15
-	}
-	if maxOverLapTotal == 0 {
-		maxOverLapTotal = 15
+	if maxOverlapTotal == 0 {
+		maxOverlapTotal = 15
 	}
 
 	for i := 0; i < tries; i++ {
@@ -129,7 +126,7 @@ func (c *Chain) Generate(maxWords, minWords int, maxOverlapRatio float64, maxOve
 			p.Shift(next)
 		}
 
-		if c.TestOutput(words, maxOverlapRatio, float64(maxOverLapTotal)) && len(words) > minWords {
+		if c.TestOutput(words, maxOverlapRatio, float64(maxOverlapTotal)) && len(words) > minWords {
 			return strings.Join(words, " ")
 		}
 	}
@@ -144,7 +141,7 @@ func (c *Chain) TestOutput(words []string, maxOverlapRatio, maxOverlapTotal floa
 
 	gramCount := math.Max(float64(len(words))-overlapMax, 1)
 	var grams [][]string
-	for i := 0; i < int(gramCount); i++ {
+	for i := range make([]int, int(gramCount)) {
 		num := len(words)
 		if overlapOver < float64(num) {
 			num = int(overlapOver)
@@ -152,7 +149,7 @@ func (c *Chain) TestOutput(words []string, maxOverlapRatio, maxOverlapTotal floa
 		grams = append(grams, words[i:i+num])
 	}
 	for _, g := range grams {
-		gramJoined := strings.Join(g, "")
+		gramJoined := strings.Join(g, " ")
 		if strings.Contains(c.RejoinedText(), gramJoined) {
 			return false
 		}
