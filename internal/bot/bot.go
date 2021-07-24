@@ -38,38 +38,43 @@ func InitBot() {
 }
 
 func HandleReplies(history *History, instanceURL, accessToken, postVisibility string, maxWords int) {
-	notificationChannel := make(chan fedi.Notification)
-	go fedi.NotificationStream(notificationChannel, instanceURL, accessToken)
-
 	for {
-		notification := <-notificationChannel
+		notificationChannel := make(chan fedi.Notification)
+		go fedi.NotificationStream(notificationChannel, instanceURL, accessToken)
 
-		if notification.Type == "mention" {
-			botUser, err := fedi.GetCurrentUser(instanceURL, accessToken)
-			if err != nil {
-				fmt.Println(err)
-				continue
+		for notification := range notificationChannel {
+			if notification.Type == "lost connection" {
+				fmt.Println("Websocket connection closed. Reopening")
+				break
 			}
 
-			// dont reply to yourself
-			if notification.Account.ID == botUser.ID {
-				continue
-			}
+			if notification.Type == "mention" {
+				botUser, err := fedi.GetCurrentUser(instanceURL, accessToken)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
 
-			followedUsers, err := fedi.GetUserFollowing(botUser, instanceURL, accessToken)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
+				// dont reply to yourself
+				if notification.Account.ID == botUser.ID {
+					continue
+				}
 
-			// mention the person we are replying to
-			replyMention := "@" + notification.Status.Account.Acct
-			quote := replyMention + " " + GenQuote(history, followedUsers, maxWords)
+				followedUsers, err := fedi.GetUserFollowing(botUser, instanceURL, accessToken)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
 
-			err = fedi.PostStatus(quote, postVisibility, notification.Status.ID, "false", instanceURL, accessToken)
-			if err != nil {
-				fmt.Println(err)
-				continue
+				// mention the person we are replying to
+				replyMention := "@" + notification.Status.Account.Acct
+				quote := replyMention + " " + GenQuote(history, followedUsers, maxWords)
+
+				err = fedi.PostStatus(quote, postVisibility, notification.Status.ID, "false", instanceURL, accessToken)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
 			}
 		}
 	}

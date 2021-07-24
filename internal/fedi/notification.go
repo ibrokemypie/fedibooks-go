@@ -71,6 +71,7 @@ func NotificationStream(notificationChannel chan Notification, instanceURL, acce
 	c, _, err := websocket.Dial(ctx, u.String(), nil)
 	if err != nil {
 		fmt.Println(err)
+		notificationChannel <- Notification{Type: "lost connection"}
 		return
 	}
 	defer c.Close(websocket.StatusInternalError, "the sky is falling")
@@ -79,9 +80,9 @@ func NotificationStream(notificationChannel chan Notification, instanceURL, acce
 		var typedEvent TypedEvent
 		err = wsjson.Read(ctx, c, &typedEvent)
 		if err != nil {
-			fmt.Println("event")
 			fmt.Println(err)
-			continue
+			notificationChannel <- Notification{Type: "lost connection"}
+			return
 		}
 
 		if typedEvent.Event == "notification" {
